@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>کارمزد پلتفرم‌های BNPL — تمپلیت اصلی (v16d)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --maxw: 1100px;
+      --gap: 16px;
+      --card-bg: #ffffff;
+      --card-br: 14px;
+      --shadow: 0 8px 20px rgba(0,0,0,.08);
+      --bar-h: 28px;
+      --handle-size: 18px;
+      --green-50:#ecfdf5;
+      --green-100:#d1fae5;
+    }
+    body{font-family:Tahoma, sans-serif;background:#f3f4f6;margin:0;padding:24px;color:#111827;}
+    .wrap{max-width:var(--maxw);margin:0 auto;}
+    h1{margin:0 0 12px 0;font-size:22px}
+    .sep{height:1px;background:#e5e7eb;margin:10px 0}
+    .row{display:grid;gap:var(--gap);align-items:start;margin-bottom:var(--gap);}
+    .cols-1{grid-template-columns:1fr;}
+    .cols-2{grid-template-columns:repeat(2, 1fr);}
+    .cols-3{grid-template-columns:repeat(3, 1fr);}
+    .cell{
+      background:var(--card-bg);border-radius:var(--card-br);box-shadow:var(--shadow);
+      padding:16px;min-height:120px;position:relative;opacity:.08;transition:opacity .25s ease;
+      outline:1px dashed #e5e7eb;
+    }
+    .cell.show{opacity:1;outline:none}
+    .row.tall .cell{ min-height: 240px; }
+    .row.first .cell{ min-height: 600px; }
+    .badge{
+      position:absolute;top:10px;inset-inline-start:10px;
+      padding:2px 8px;border-radius:999px;font-size:11px;background:#eef2ff;color:#3730a3;
+    }
+    .coords{position:absolute;bottom:10px;inset-inline-start:10px;font-size:11px;color:#6b7280}
+    .content{font-size:14px;margin-top:8px;color:#374151}
+
+    /* Split bar */
+    .bar-section{ display:flex; flex-direction:column; align-items:center; gap:10px; margin-top:8px;}
+    .labels{ width:60%; direction:ltr; display:flex; justify-content:space-between; align-items:center; font-size:13px; color:#334155; margin-bottom:4px; }
+    .pill{ background:#f8fafc; border:1px solid #e2e8f0; border-radius:999px; padding:4px 10px; min-width:180px; text-align:center; }
+    .bar-wrap, .bar-mini-pill{ height:var(--bar-h); background:#f1f5f9; border-radius:999px; box-shadow:inset 0 0 0 1px #e5e7eb; position:relative; overflow:hidden; }
+    .bar-wrap{ width:60%; cursor:ew-resize; }
+    .fill-red, .fill-green{ position:absolute; top:0; bottom:0; }
+    .fill-red{ left:0; background:#ef4444; }
+    .fill-green{ right:0; background:#10b981; }
+    .handle{ position:absolute; top:50%; transform:translate(-50%, -50%); width:var(--handle-size); height:var(--handle-size); background:#fff; border:2px solid #334155; border-radius:999px; box-shadow:0 2px 6px rgba(0,0,0,.15); cursor:grab; }
+
+    /* Fee table + fractions side-by-side */
+    .fee-wrap{ margin-top:18px; width:100%; display:flex; gap:24px; align-items:stretch; }
+    .fee-table{
+      flex:1 1 58%;
+      background:var(--green-50);
+      border:1px solid var(--green-100);
+      border-radius:12px; padding:12px;
+      display:flex; flex-direction:column;
+    }
+    .fee-table h4{ margin:0 0 8px 0; font-size:14px; color:#065f46;}
+    .fee-table .table-box{ flex:1; overflow:auto; }
+    table{ width:100%; border-collapse:separate; border-spacing:0 6px; }
+    th, td{ font-size:13px; text-align:center; padding:8px 6px; }
+    thead th{ color:#065f46; font-weight:700; position:sticky; top:0; background:var(--green-50); }
+    tbody tr{ background:#ffffff; }
+    tbody td{ border-top:1px solid #e5e7eb; border-bottom:1px solid #e5e7eb; }
+    tbody tr td:first-child{ border-inline-start:1px solid #e5e7eb; border-radius:8px 0 0 8px; }
+    tbody tr td:last-child{ border-inline-end:1px solid #e5e7eb; border-radius:0 8px 8px 0; }
+    input.pct{ width:72px; text-align:center; padding:6px 8px; border:1px solid #9ca3af; border-radius:8px; background:#fff; }
+
+    .fractions{ flex:1 1 42%; display:flex; flex-direction:column; gap:18px; }
+    .fraction{ flex:1; background:#ffffff; border:1px dashed #cbd5e1; border-radius:12px; padding:12px; display:flex; align-items:center; justify-content:center; }
+    .frac-wrap{ display:grid; grid-template-columns: 1fr auto auto; align-items:center; gap:16px; } /* fraction | '=' | percent */
+    .equ{ font-size:22px; font-weight:700; color:#111827; position:relative; top:32px; }
+    .pct-col{ display:flex; flex-direction:column; align-items:flex-start; gap:6px; position:relative; top:32px; }
+    .bigpct{ font-size:24px; font-weight:800; color:#0f172a; min-width:100px; text-align:center; }
+    .pct-label{ font-size:13px; color:#1f2937; white-space:nowrap; font-weight:700; }
+    .pct-label.two-line{ white-space:normal; line-height:1.35; } /* allow wrap on two lines */
+
+    /* Fraction visual */
+    .vfrac{ display:flex; flex-direction:column; align-items:center; gap:10px; }
+    .circle-wrap{ width:120px; height:120px; display:flex; align-items:center; justify-content:center; position:relative; }
+    .circle-inner{
+      width:64px; height:64px; border-radius:999px; background:#334155; color:#fff;
+      display:flex; align-items:center; justify-content:center; font-size:11px; padding:6px; text-align:center;
+      transform-origin:center center; transition:transform .2s ease;
+    }
+    .frac-line-real{ width:260px; height:2px; background:#111827; }
+
+    /* Denominators as pill bars */
+    .denom{ width:260px; height:var(--bar-h); position:relative; display:flex; align-items:center; justify-content:center; }
+    .denom .back{ position:absolute; inset:0; border-radius:999px; background:#f1f5f9; box-shadow:inset 0 0 0 1px #e5e7eb; }
+    .denom .green-centered{
+      position:absolute; height:100%; background:#10b981; border-radius:999px;
+      left:50%; transform:translateX(-50%); width:60%;
+    }
+    .denom .red{ position:absolute; top:0; bottom:0; left:0; background:#ef4444; border-radius:999px 0 0 999px; }
+    .denom .green{ position:absolute; top:0; bottom:0; right:0; background:#10b981; border-radius:0 999px 999px 0; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>کارمزد پلتفرم‌های BNPL — تمپلیت اصلی (v16d)</h1>
+    <div class="sep"></div>
+
+    <!-- Row 1 -->
+    <div class="row cols-1 first">
+      <div class='cell show' id='cell-r1-c1'>
+        <span class='badge'>r1/c1</span>
+        <div class='content'>
+          <!-- Main split bar -->
+          <div class="bar-section">
+            <div class="labels">
+              <div class="pill">کالای اساسی (قرمز): <b id="redPctLbl">40%</b></div>
+              <div class="pill">کالای غیر اساسی (سبز): <b id="greenPctLbl">60%</b></div>
+            </div>
+            <div class="bar-wrap" id="barWrap">
+              <div class="fill-red" id="fillRed" style="width:40%"></div>
+              <div class="fill-green" id="fillGreen" style="width:60%"></div>
+              <div class="handle" id="handle" style="left:40%"></div>
+            </div>
+          </div>
+
+          <!-- Fee table + fractions -->
+          <div class="fee-wrap">
+            <div class="fee-table">
+              <h4>جدول کارمزد کالاهای غیر اساسی (قابل ویرایش)</h4>
+              <div class="table-box">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>پله خرید ماهانه (تومان)</th>
+                      <th>سهم از کل</th>
+                      <th>کارمزد پله (%)</th>
+                    </tr>
+                  </thead>
+                  <tbody id="feeBody"></tbody>
+                </table>
+              </div>
+              <div class="sep" style="margin:8px 0"></div>
+              <div class="pill" style="width:max-content">پیش‌فرض‌ها: 0, 0.5, 2, 3, 4, 5 درصد — قابل ویرایش</div>
+            </div>
+
+            <div class="fractions">
+              <!-- Fraction 1: Fee vs Non-Essential -->
+              <div class="fraction">
+                <div class="frac-wrap">
+                  <div class="vfrac">
+                    <div class="circle-wrap">
+                      <div class="circle-inner" id="circleNE">مبلغ کارمزد نقدی</div>
+                    </div>
+                    <div class="frac-line-real"></div>
+                    <div class="denom">
+                      <div class="back"></div>
+                      <div class="green-centered" id="denGreenOnly" style="width:60%"></div>
+                    </div>
+                  </div>
+                  <div class="equ">=</div>
+                  <div class="pct-col">
+                    <div class="bigpct" id="pctNE">—</div>
+                    <div class="pct-label two-line"><b>درصد کارمزد روی</b><br><b>بخش غیراساسی</b></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Fraction 2: Fee vs Total -->
+              <div class="fraction">
+                <div class="frac-wrap">
+                  <div class="vfrac">
+                    <div class="circle-wrap">
+                      <div class="circle-inner" id="circleTotal">مبلغ کارمزد نقدی</div>
+                    </div>
+                    <div class="frac-line-real"></div>
+                    <div class="denom">
+                      <div class="back"></div>
+                      <div class="red" id="miniFullRed" style="width:40%"></div>
+                      <div class="green" id="miniFullGreen" style="width:60%"></div>
+                    </div>
+                  </div>
+                  <div class="equ">=</div>
+                  <div class="pct-col">
+                    <div class="bigpct" id="pctTotal">—</div>
+                    <div class="pct-label"><b>درصد کارمزد روی کل</b></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class='coords'>ردیف 1 - ستون 1</div>
+      </div>
+    </div>
+
+    <!-- Row 2 -->
+    <div class="row cols-2 tall">
+      <div class='cell' id='cell-r2-c1'><span class='badge'>ر2/س1</span><div class='content'>محتوای نمونه برای ردیف 2، ستون 1</div><div class='coords'>ردیف 2 - ستون 1</div></div>
+      <div class='cell' id='cell-r2-c2'><span class='badge'>ر2/س2</span><div class='content'>محتوای نمونه برای ردیف 2، ستون 2</div><div class='coords'>ردیف 2 - ستون 2</div></div>
+    </div>
+
+    <!-- Row 3 -->
+    <div class="row cols-3">
+      <div class='cell' id='cell-r3-c1'><span class='badge'>ر3/س1</span><div class='content'>محتوای نمونه برای ردیف 3، ستون 1</div><div class='coords'>ردیف 3 - ستون 1</div></div>
+      <div class='cell' id='cell-r3-c2'><span class='badge'>ر3/س2</span><div class='content'>محتوای نمونه برای ردیف 3، ستون 2</div><div class='coords'>ردیف 3 - ستون 2</div></div>
+      <div class='cell' id='cell-r3-c3'><span class='badge'>ر3/س3</span><div class='content'>محتوای نمونه برای ردیف 3، ستون 3</div><div class='coords'>ردیف 3 - ستون 3</div></div>
+    </div>
+  </div>
+
+  <script>
+    const GRAND_TOTAL_TOMAN = 18423255708908;
+
+    function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
+    function formatBillionToman(x){
+      const b = x / 1e9;
+      return b.toLocaleString('fa-IR', {maximumFractionDigits:1}) + ' میلیارد تومان';
+    }
+
+    const barWrap = document.getElementById('barWrap');
+    const fillRed = document.getElementById('fillRed');
+    const fillGreen = document.getElementById('fillGreen');
+    const handle = document.getElementById('handle');
+    const redLbl = document.getElementById('redPctLbl');
+    const greenLbl = document.getElementById('greenPctLbl');
+    const denGreenOnly = document.getElementById('denGreenOnly');
+    const miniFullRed = document.getElementById('miniFullRed');
+    const miniFullGreen = document.getElementById('miniFullGreen');
+
+    let boundary = 40;
+    function renderBar(){
+      const red = clamp(boundary, 0, 100);
+      const green = 100 - red;
+      fillRed.style.width = red + '%';
+      fillGreen.style.width = green + '%';
+      handle.style.left = red + '%';
+      redLbl.textContent = red + '%';
+      greenLbl.textContent = green + '%';
+      denGreenOnly.style.width = green + '%';
+      miniFullRed.style.width = red + '%';
+      miniFullGreen.style.width = green + '%';
+      recalc();
+    }
+    function updateFromEvent(e){
+      const rect = barWrap.getBoundingClientRect();
+      const pct = ((e.clientX - rect.left) / rect.width) * 100;
+      boundary = clamp(Math.round(pct), 0, 100);
+      renderBar();
+    }
+    barWrap.addEventListener('click', updateFromEvent);
+    let dragging=false;
+    handle.addEventListener('mousedown', (e)=>{ dragging=true; handle.style.cursor='grabbing'; e.preventDefault(); });
+    document.addEventListener('mouseup', ()=>{ dragging=false; handle.style.cursor='grab'; });
+    document.addEventListener('mousemove', (e)=>{ if(dragging) updateFromEvent(e); });
+
+    const brackets = [
+      {range:'0 - 650,000',            share:0.11, defaultFee:0.0},
+      {range:'650,001 - 1,300,000',    share:0.12, defaultFee:0.5},
+      {range:'1,300,001 - 1,950,000',  share:0.12, defaultFee:2.0},
+      {range:'1,950,001 - 2,600,000',  share:0.11, defaultFee:3.0},
+      {range:'2,600,001 - 3,900,000',  share:0.17, defaultFee:4.0},
+      {range:'3,900,001+',             share:0.37, defaultFee:5.0},
+    ];
+    const feeBody = document.getElementById('feeBody');
+
+    function buildTable(){
+      feeBody.innerHTML = '';
+      brackets.forEach((b,i)=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${b.range}</td>
+          <td>${(b.share*100).toFixed(0)}%</td>
+          <td>
+            <input class="pct" type="number" inputmode="decimal" step="0.01" min="0" max="100" value="${b.defaultFee}" data-idx="${i}" />%
+          </td>
+        `;
+        feeBody.appendChild(tr);
+      });
+      feeBody.querySelectorAll('input.pct').forEach(inp=>{
+        inp.addEventListener('input', ()=>{
+          const idx = parseInt(inp.dataset.idx,10);
+          const val = parseFloat(inp.value);
+          brackets[idx].defaultFee = isNaN(val) ? 0 : val;
+          recalc();
+        });
+      });
+    }
+
+    function recalc(){
+      const red = clamp(boundary, 0, 100);
+      const green = 100 - red;
+      const greenRatio = green / 100;
+
+      let weightedFee = 0;
+      brackets.forEach(b=>{
+        const feePct = (parseFloat(b.defaultFee)||0) / 100;
+        weightedFee += b.share * feePct;
+      });
+
+      const absTotal = weightedFee * greenRatio * GRAND_TOTAL_TOMAN;
+      const absNE    = absTotal;
+
+      const pctNEVal    = (weightedFee * 100);
+      const pctTotalVal = (weightedFee * greenRatio * 100);
+
+      document.getElementById('pctNE').textContent = pctNEVal.toFixed(2) + '%';
+      document.getElementById('pctTotal').textContent = pctTotalVal.toFixed(2) + '%';
+
+      const scale = 1 + 0.6 * greenRatio;
+      document.getElementById('circleNE').style.transform = `scale(${scale})`;
+      document.getElementById('circleTotal').style.transform = `scale(${scale})`;
+    }
+
+    buildTable();
+    renderBar();
+  </script>
+</body>
+</html>
